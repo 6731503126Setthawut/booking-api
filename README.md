@@ -8,6 +8,11 @@ npx wrangler dev
 ```
 Base URL: http://localhost:8787/api
 
+** Deployed API**:
+
+```
+https://booking-api.setthawut.workers.dev/api
+
 ## Test
 ```
 bash test.sh 2>&1 | tee TEST_EVIDENCE.md
@@ -23,4 +28,4 @@ erDiagram
 See schema.sql for the full DDL.
 
 ## Files
-API_CONTRACT.md, AI_LOG.md, QUALITY_GATE_REVIEW.md, TEST_EVIDENCE.md
+API_CONTRACT.md, AI_LOG.md, QUALITY_GATE_REVIEW.md, TEST_EVIDENCE.md,schema.sql
