@@ -19,12 +19,27 @@ bash test.sh 2>&1 | tee TEST_EVIDENCE.md
 ```
 
 ## Schema / ERD
+
 ```mermaid
 erDiagram
   equipment ||--o{ bookings : has
-  equipment { text id PK  text name  text location }
-  bookings { text id PK  text equipment_id FK  text borrower_name  text start_at  text end_at  text purpose }
+
+  equipment {
+    text id PK
+    text name
+    text location
+  }
+
+  bookings {
+    text id PK
+    text equipment_id FK
+    text borrower_name
+    text start_at
+    text end_at
+    text purpose
+  }
 ```
+
 See schema.sql for the full DDL.
 
 ## Files
