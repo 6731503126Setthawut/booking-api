@@ -14,7 +14,8 @@ Base URL: http://localhost:8787/api
 https://booking-api.setthawut.workers.dev/api
 
 ## Test
-```
+
+```bash
 bash test.sh 2>&1 | tee TEST_EVIDENCE.md
 ```
 
