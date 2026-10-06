@@ -103,24 +103,6 @@ async function assertEquipmentExists(db: D1Database, equipmentId: string) {
   if (!row) throw new HttpError(400, `equipmentId "${equipmentId}" does not exist`)
 }
 
-async function assertNoOverlap(
-  db: D1Database,
-  equipmentId: string,
-  startAt: string,
-  endAt: string,
-  excludeId = '',
-) {
-  const row = await db
-    .prepare(
-      `SELECT id FROM bookings
-       WHERE equipment_id = ? AND start_at < ? AND end_at > ? AND id != ?
-       LIMIT 1`,
-    )
-    .bind(equipmentId, endAt, startAt, excludeId)
-    .first()
-  if (row) throw new HttpError(409, 'Booking time overlaps with an existing booking')
-}
-
 // ---------- app ----------
 const app = new Hono<Env>().basePath('/api')
 
@@ -146,15 +128,23 @@ app.get('/bookings/:id', async (c) => {
 app.post('/bookings', async (c) => {
   const input = validateBooking(await readJson(c))
   await assertEquipmentExists(c.env.DB, input.equipmentId)
-  await assertNoOverlap(c.env.DB, input.equipmentId, input.startAt, input.endAt)
-
   const id = crypto.randomUUID()
-  await c.env.DB.prepare(
+  const result = await c.env.DB.prepare(
     `INSERT INTO bookings (id, equipment_id, borrower_name, start_at, end_at, purpose)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     SELECT ?, ?, ?, ?, ?, ?
+     WHERE NOT EXISTS (
+       SELECT 1 FROM bookings
+       WHERE equipment_id = ? AND start_at < ? AND end_at > ?
+     )`,
   )
-    .bind(id, input.equipmentId, input.borrowerName, input.startAt, input.endAt, input.purpose)
+    .bind(
+      id, input.equipmentId, input.borrowerName, input.startAt, input.endAt, input.purpose,
+      input.equipmentId, input.endAt, input.startAt,
+    )
     .run()
+  if (result.meta.changes === 0) {
+    throw new HttpError(409, "Booking time overlaps with an existing booking")
+  }
 
   return c.json({ id, ...input }, 201)
 })
@@ -175,15 +165,22 @@ app.patch('/bookings/:id', async (c) => {
   })
 
   await assertEquipmentExists(c.env.DB, input.equipmentId)
-  await assertNoOverlap(c.env.DB, input.equipmentId, input.startAt, input.endAt, id)
-
-  await c.env.DB.prepare(
+  const result = await c.env.DB.prepare(
     `UPDATE bookings
      SET equipment_id = ?, borrower_name = ?, start_at = ?, end_at = ?, purpose = ?
-     WHERE id = ?`,
+     WHERE id = ? AND NOT EXISTS (
+       SELECT 1 FROM bookings
+       WHERE equipment_id = ? AND id != ? AND start_at < ? AND end_at > ?
+     )`,
   )
-    .bind(input.equipmentId, input.borrowerName, input.startAt, input.endAt, input.purpose, id)
+    .bind(
+      input.equipmentId, input.borrowerName, input.startAt, input.endAt, input.purpose, id,
+      input.equipmentId, id, input.endAt, input.startAt,
+    )
     .run()
+  if (result.meta.changes === 0) {
+    throw new HttpError(409, "Booking time overlaps with an existing booking")
+  }
 
   return c.json({ id, ...input })
 })
