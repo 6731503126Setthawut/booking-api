@@ -1,21 +1,26 @@
-```txt
+# Campus Equipment Booking API (Hono + D1)
+
+## Run
+```
 npm install
-npm run dev
+npx wrangler d1 execute booking-db --local --file=schema.sql
+npx wrangler dev
+```
+Base URL: http://localhost:8787/api
+
+## Test
+```
+bash test.sh 2>&1 | tee TEST_EVIDENCE.md
 ```
 
-```txt
-npm run deploy
+## Schema / ERD
+```mermaid
+erDiagram
+  equipment ||--o{ bookings : has
+  equipment { text id PK  text name  text location }
+  bookings { text id PK  text equipment_id FK  text borrower_name  text start_at  text end_at  text purpose }
 ```
+See schema.sql for the full DDL.
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
-
-```txt
-npm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiating `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+## Files
+API_CONTRACT.md, AI_LOG.md, QUALITY_GATE_REVIEW.md, TEST_EVIDENCE.md
