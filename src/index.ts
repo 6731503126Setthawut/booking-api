@@ -49,12 +49,18 @@ function str(v: unknown, field: string, required = true): string {
   return t
 }
 
+const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/
+
 function date(v: unknown, field: string): string {
   const s = str(v, field)
-  if (Number.isNaN(new Date(s).getTime())) {
-    throw new HttpError(400, `${field} must be a valid ISO 8601 date`)
+  const d = new Date(s)
+  if (!ISO_RE.test(s) || Number.isNaN(d.getTime())) {
+    throw new HttpError(
+      400,
+      `${field} must be an ISO 8601 date with timezone, e.g. 2026-10-20T09:00:00.000Z`,
+    )
   }
-  return s
+  return d.toISOString()
 }
 
 function validateBooking(b: Record<string, unknown>): BookingInput {
